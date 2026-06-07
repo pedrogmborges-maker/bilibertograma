@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bilibertograma — Aferição da Bilibertação</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy1:#1d477f; --navy2:#102a52;
+    --gold:#e8c466; --gold-deep:#c79a2b; --gold-soft:#f4d985;
+    --panel:#ffffff; --panel2:#fbfaf6; --ink:#1f2547; --muted:#5e6488;
+    --line:#e9e7df; --accent:#3b6fd4;
+    --energ:#df8413; --fin:#3b6fd4; --prop:#7a52b3;
+    --energ-soft:#fcebd2; --fin-soft:#dde8fb; --prop-soft:#ece2fa;
+    --soft:#f7f6f0; --soft2:#fbfaf5;
+    --good:#2ea36f; --warn:#d39000; --bad:#d6534e;
+    --shadow:0 14px 40px -18px rgba(8,24,53,.55);
+    --font-serif:"Fraunces",Georgia,"Times New Roman",serif;
+    --font-sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:var(--font-sans);background:#143461;
+    color:var(--ink);line-height:1.55;font-size:15px;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(1200px 620px at 82% -16%,#2c63ab 0,transparent 55%),
+      radial-gradient(900px 520px at 6% 4%,#234f8d 0,transparent 50%),
+      linear-gradient(168deg,#1d477f 0%,#0e2649 100%)}
+  ::selection{background:rgba(244,217,133,.45)}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 18px 96px}
+  a{color:var(--accent)}
+  /* top progress line */
+  #topbar{position:fixed;top:0;left:0;height:4px;width:0;z-index:60;
+    background:linear-gradient(90deg,var(--energ),var(--gold-soft),var(--fin));transition:width .3s ease}
+
+  /* HERO */
+  .hero{padding:54px 0 26px;text-align:center;color:#eaf1fb}
+  .hero .eyebrow{font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold-soft);
+    font-weight:600;margin-bottom:14px;opacity:.92}
+  .hero h1{font-family:var(--font-serif);margin:0;font-size:clamp(40px,8vw,68px);line-height:1.16;
+    font-weight:600;letter-spacing:-.01em;padding-bottom:.08em;
+    background:linear-gradient(96deg,#c79a2b 0%,#f6dd8e 42%,#e6c264 60%,#c79a2b 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero .rule{width:80px;height:1px;margin:20px auto;position:relative;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+  .hero .rule::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;
+    transform:translate(-50%,-50%) rotate(45deg);background:var(--gold);box-shadow:0 0 8px var(--gold)}
+  .hero p.def{max-width:620px;margin:0 auto;color:#cdd9ef;font-size:15px;line-height:1.7}
+  .hero p.def b{color:#fff;font-weight:600}
+  .hero .chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  .hero .chip{font-size:12.5px;color:#dbe6f8;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.16);padding:7px 14px;border-radius:999px;backdrop-filter:blur(6px)}
+  .hero .chip b{color:var(--gold-soft);font-weight:700}
+
+  /* CARD */
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:20px;padding:24px;margin:18px 0;box-shadow:var(--shadow);position:relative}
+  .card::before{content:"";position:absolute;left:24px;right:24px;top:0;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,transparent,rgba(231,196,99,.5),transparent);opacity:.7}
+
+  /* section headers */
+  h2.sec{font-family:var(--font-serif);font-size:19px;font-weight:600;letter-spacing:0;
+    text-transform:none;color:var(--ink);margin:0 0 16px;display:flex;align-items:center;gap:11px}
+  h2.sec .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 4px rgba(0,0,0,.03)}
+  .sechead{display:flex;align-items:center;gap:14px;margin:0 0 4px}
+  .sechead .ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+    font-family:var(--font-serif);font-weight:700;font-size:20px;color:#fff;flex-shrink:0}
+  .sechead .tt{font-family:var(--font-serif);font-size:21px;font-weight:600;color:var(--ink);line-height:1.15}
+  .sechead .st{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .sechead .axp{margin-left:auto;text-align:right;min-width:120px}
+  .sechead .axp b{font-size:13px;color:var(--ink);font-weight:700}
+  .sechead .axp .pb{height:6px;border-radius:999px;background:#eceadf;overflow:hidden;margin-top:5px}
+  .sechead .axp .pb>i{display:block;height:100%;width:0;border-radius:999px;transition:width .3s}
+
+  /* identification */
+  .grid-id{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+  .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px;letter-spacing:.06em;
+    text-transform:uppercase;font-weight:600}
+  .field input{width:100%;background:#fff;border:1px solid var(--line);color:var(--ink);
+    padding:11px 13px;border-radius:11px;font-size:14px;font-family:inherit;transition:.15s}
+  .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,111,212,.16)}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:#474c66}
+  .legend b{color:var(--ink)}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--line);
+    padding:7px 13px;border-radius:999px;font-size:12.5px}
+  .pill .num{font-weight:700;width:24px;height:24px;display:grid;place-items:center;border-radius:7px;
+    font-size:12px;color:#fff;flex-shrink:0}
+
+  /* STAGE accordions */
+  .stage{border:1px solid var(--line);border-radius:14px;margin:11px 0;overflow:hidden;background:#fff;
+    transition:border-color .2s,box-shadow .2s}
+  .stage.e{border-left:4px solid var(--energ)} .stage.f{border-left:4px solid var(--fin)}
+  .stage:hover{box-shadow:0 6px 18px -10px rgba(8,24,53,.3)}
+  .stage.done{background:linear-gradient(180deg,#fffdf6,#fff)}
+  .stage.done.e{border-left-color:var(--gold-deep)} .stage.done.f{border-left-color:var(--gold-deep)}
+  .stage>summary{cursor:pointer;list-style:none;padding:15px 17px;display:flex;align-items:center;
+    gap:13px;font-weight:600;user-select:none}
+  .stage>summary::-webkit-details-marker{display:none}
+  .stage>summary:hover{background:#faf9f4}
+  .stage .stnum{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;
+    font-size:13px;font-weight:700;color:#fff;font-family:var(--font-serif)}
+  .stage.e .stnum{background:linear-gradient(140deg,#eba53a,var(--energ))}
+  .stage.f .stnum{background:linear-gradient(140deg,#5d8be8,var(--fin))}
+  .stage .stinfo{min-width:0}
+  .stage .stname{font-size:15px;color:var(--ink)}
+  .stage .meta{font-size:12px;color:var(--muted);font-weight:400}
+  .stage .stcount{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);
+    background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:4px 11px;flex-shrink:0;
+    display:inline-flex;align-items:center;gap:6px;transition:.2s}
+  .stage.done .stcount{color:#fff;background:linear-gradient(135deg,var(--gold),var(--gold-deep));border-color:transparent}
+  .stage.done .stcount::before{content:"✓";font-size:12px}
+  .chev{color:var(--muted);transition:transform .2s;flex-shrink:0;font-size:12px}
+  .stage[open] .chev{transform:rotate(90deg)}
+  .stbody{padding:2px 17px 12px;border-top:1px solid var(--line);background:#fff}
+  .stmarco{font-size:12.5px;color:var(--muted);padding:11px 0 4px}
+  .stmarco b,.stref b{color:var(--ink);font-weight:600}
+  .stref{font-size:12.5px;color:#54596f;background:var(--soft);border-left:3px solid var(--gold);
+    border-radius:0 10px 10px 0;padding:9px 13px;margin:2px 0 8px;line-height:1.55}
+
+  /* question rows */
+  .q{padding:14px 0;border-bottom:1px solid #f0eee5;display:flex;gap:14px;align-items:flex-start}
+  .q:last-child{border-bottom:none}
+  .q.answered .qt{color:var(--ink)}
+  .q .qt{flex:1;font-size:14px;color:#454a66;transition:color .15s}
+  .q .qn{color:#fff;font-weight:700;min-width:22px;height:22px;border-radius:6px;font-size:11px;
+    display:grid;place-items:center;background:#c9c6ba;flex-shrink:0;margin-top:1px;transition:.15s;font-family:var(--font-sans)}
+  .q.answered .qn{background:var(--good)}
+  .opts{display:flex;gap:7px;flex-shrink:0}
+  .opts label{cursor:pointer}
+  .opts input{position:absolute;opacity:0;pointer-events:none}
+  .opts span{display:grid;place-items:center;width:48px;height:38px;border:1.5px solid var(--line);
+    border-radius:10px;font-size:13.5px;font-weight:700;color:#9a9aac;background:#fff;transition:.15s;line-height:1}
+  .opts label:hover span{border-color:#bcc2d6;transform:translateY(-1px)}
+  .opts input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+  .opts input:checked+span{color:#fff;transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(0,0,0,.3)}
+  .opts .o0 input:checked+span{background:var(--bad);border-color:var(--bad)}
+  .opts .o5 input:checked+span{background:var(--warn);border-color:var(--warn)}
+  .opts .o1 input:checked+span{background:var(--good);border-color:var(--good)}
+
+  /* toolbar */
+  .toolbar{position:sticky;bottom:0;z-index:30;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid var(--line);
+    border-radius:16px;padding:13px 16px;margin:16px 0 0;box-shadow:0 12px 30px -12px rgba(8,24,53,.45)}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:11px 18px;border-radius:12px;
+    font-size:14px;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit}
+  .btn:hover{border-color:#c7ccdc;transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(135deg,var(--gold-soft),var(--gold-deep));border-color:transparent;
+    color:#3a2a06;box-shadow:0 8px 20px -8px rgba(199,154,43,.7)}
+  .btn.primary:hover{filter:brightness(1.04)}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  .btn:disabled{opacity:.6;cursor:default;transform:none}
+  .prog{flex:1;min-width:150px;height:9px;background:#edeae0;border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+  .prog>i{display:block;height:100%;width:0;border-radius:999px;
+    background:linear-gradient(90deg,var(--energ),var(--gold),var(--fin));transition:width .3s}
+  .progtxt{font-size:13px;color:var(--muted);min-width:78px;text-align:right;font-weight:600}
+  .progtxt b{color:var(--ink)}
+
+  /* RESULTS */
+  #results{display:none}
+  .result-hero{display:flex;gap:30px;align-items:center;flex-wrap:wrap;margin:4px 0 20px;
+    background:radial-gradient(700px 360px at 88% -60%,#2f64ad 0,transparent 60%),
+      linear-gradient(155deg,#1d477f,#0f2a51);border-radius:18px;padding:26px 28px;color:#eaf1fb;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+  .gauge{position:relative;width:210px;height:124px;flex-shrink:0}
+  .gnum{position:absolute;left:0;right:0;bottom:2px;text-align:center}
+  .gnum b{font-family:var(--font-serif);font-size:46px;font-weight:700;color:var(--gold-soft);line-height:1}
+  .gnum small{display:block;color:#a9bbda;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;margin-top:3px}
+  .indexmeta{flex:1;min-width:240px}
+  .indexmeta .lvl{font-family:var(--font-serif);font-size:24px;font-weight:600;margin-bottom:4px;color:#fff}
+  .indexmeta .rdesc{color:#bccbe6;font-size:13.5px}
+  .dims{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:0}
+  .dim{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:15px}
+  .dim .nm{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+  .dim .vl{font-family:var(--font-serif);font-size:28px;font-weight:600;margin:2px 0 6px;color:var(--ink)}
+  .dbar{height:8px;background:#e8e5da;border-radius:999px;overflow:hidden}
+  .dbar>i{display:block;height:100%;border-radius:999px;transition:width .5s}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .chartbox{background:var(--soft);border:1px solid var(--line);border-radius:15px;padding:16px}
+  .chartbox h3{margin:0 0 10px;font-size:12.5px;color:var(--muted);font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase}
+  table.stages{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  table.stages th,table.stages td{padding:10px 11px;text-align:left;border-bottom:1px solid var(--line)}
+  table.stages tr:last-child td{border-bottom:none}
+  table.stages th{color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+  .tag{font-size:11px;padding:3px 10px;border-radius:999px;font-weight:700;white-space:nowrap}
+  .tag.cons{background:rgba(46,163,111,.14);color:var(--good)}
+  .tag.dev{background:rgba(211,144,0,.16);color:#a06e00}
+  .tag.inc{background:rgba(214,83,78,.14);color:var(--bad)}
+  .analysis h3{margin:20px 0 8px;font-family:var(--font-serif);font-size:18px;font-weight:600}
+  .callout{border-left:3px solid var(--accent);background:var(--soft);padding:14px 16px;
+    border-radius:0 12px 12px 0;margin:10px 0;font-size:13.5px}
+  .callout.prio{border-left-color:var(--energ);background:#fdf4e7}
+  .nextstep{background:linear-gradient(135deg,#fff8ec,#f3f7ff);border:1px solid var(--gold);
+    border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 10px 30px -16px rgba(199,154,43,.5)}
+  .nextstep .k{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-deep);font-weight:700}
+  .nextstep h4{margin:7px 0 9px;font-family:var(--font-serif);font-size:20px;font-weight:600}
+  ul.clean{margin:8px 0;padding-left:18px}
+  ul.clean li{margin:5px 0}
+  .muted{color:var(--muted);font-size:12.5px}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+  .note{font-size:12.5px;color:var(--muted);background:var(--soft);border:1px dashed var(--line);
+    border-radius:12px;padding:11px 13px;margin-top:12px}
+  .note b{color:var(--ink)}
+  .ortos{margin-top:20px;display:grid;gap:12px}
+  .orto{background:var(--soft);border-left:3px solid var(--gold);border-radius:0 13px 13px 0;padding:15px 17px}
+  .orto p{margin:0;font-family:var(--font-serif);font-size:15px;font-style:italic;color:var(--ink);line-height:1.55}
+  .orto .src{display:block;margin-top:9px;font-size:11.5px;color:var(--muted);font-style:normal}
+  .orto .src b{color:var(--gold-deep);font-weight:700}
+
+  /* PDF header */
+  .pdfhead{display:none;align-items:center;justify-content:space-between;gap:12px;
+    padding-bottom:16px;margin-bottom:16px;border-bottom:2px solid var(--gold)}
+  .pdfhead .ttl{font-family:var(--font-serif);font-weight:700;font-size:24px;color:var(--gold-deep)}
+  .pdfhead .who{font-size:12px;color:var(--muted);text-align:right}
+
+  /* footer */
+  footer.foot{text-align:center;color:#a9bbda;font-size:12.5px;padding:30px 0 0;line-height:1.7}
+  footer.foot b{color:var(--gold-soft)}
+
+  @media(max-width:760px){
+    .wrap{padding:0 14px 92px}
+    .grid-id{grid-template-columns:1fr}
+    .charts{grid-template-columns:1fr}
+    .dims{grid-template-columns:1fr}
+    .hero{padding:40px 0 18px}
+    .card{padding:16px}.card::before{left:16px;right:16px}
+    .sechead .axp{display:none}
+    .sechead .ic{width:38px;height:38px;font-size:18px}
+    .sechead .tt{font-size:19px}
+    .stage>summary{padding:13px 13px}
+    .stage .stinfo{flex:1 1 auto;min-width:0}
+    .stage .stname{display:block}
+    .stage .stinfo .meta{display:block;margin-top:1px}
+    .q{flex-wrap:wrap}
+    .q .qt{flex:1 1 100%}
+    .opts{margin-left:34px;margin-top:4px}
+    .opts span{width:52px;height:40px}
+    .result-hero{padding:20px;gap:14px;flex-direction:column;text-align:center}
+    .gauge{margin:0 auto}
+    .indexmeta{text-align:center;min-width:0;width:100%;flex:none}
+    .toolbar{padding:12px}
+    .toolbar .prog{min-width:110px}
+    .toolbar .btn{flex:1 1 auto}
+    .toolbar .btn.primary{flex-basis:100%}
+    /* tabela vira cartões empilhados */
+    #stagesTable thead{display:none}
+    #stagesTable tr{display:block;border:1px solid var(--line);border-radius:13px;
+      background:var(--soft);padding:11px 14px;margin-bottom:11px}
+    #stagesTable td{display:flex;justify-content:space-between;align-items:center;gap:14px;
+      border:none;padding:5px 0;font-size:13px}
+    #stagesTable td.th-cell{display:block;border-bottom:1px solid var(--line);
+      margin-bottom:5px;padding:0 0 8px}
+    #stagesTable td[data-l]::before{content:attr(data-l);color:var(--muted);
+      font-weight:700;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
+  }
+  @media(max-width:400px){
+    .hero h1{font-size:42px}
+    .opts span{width:48px}
+    .pill{font-size:12px}
+    .toolbar .btn.ghost{flex:1 1 40%}
+  }
+  @media print{
+    body{background:#fff}#topbar,.toolbar,#fillSection,.btn,.hero{display:none!important}
+    .card{box-shadow:none;border-color:#ccc}.card::before{display:none}#results{display:block!important}
+  }
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>Bilibertograma</h1>
+    <p class="def" style="margin-top:24px">Instrumento aferidor do grau de <b>bilibertação</b> da consciência — o atingimento
+    antecipado de maior liberdade de manifestação intrafísica por meio do <b>domínio das energias
+    conscienciais</b> e da <b>independência econômico-financeira</b> (pé-de-meia), visando a
+    disponibilidade proexológica integral.</p>
+    <p class="def" style="margin-top:14px">São <b>100 perguntas</b>; cada uma vale 0, 0,5 ou 1 ponto,
+    gerando o <b style="white-space:nowrap">Índice Bilibertométrico</b>.</p>
+  </header>
+
+  <!-- IDENTIFICAÇÃO -->
+  <div class="card">
+    <h2 class="sec"><span class="dot" style="background:var(--accent)"></span>Identificação</h2>
+    <div class="grid-id">
+      <div class="field"><label>Nome</label><input id="f_nome" placeholder="Seu nome"></div>
+      <div class="field"><label>Data</label><input id="f_data" type="date"></div>
+      <div class="field"><label>Idade</label><input id="f_idade" type="number" min="0" max="120" placeholder="ex.: 28"></div>
+    </div>
+    <div class="note">A idade é usada apenas para comparar suas conquistas com a <b>faixa etária referencial</b> de cada
+    estágio e identificar o gargalo bilibertológico.</div>
+  </div>
+
+  <!-- LEGENDA -->
+  <div class="card">
+    <h2 class="sec"><span class="dot" style="background:var(--good)"></span>Critério de pontuação</h2>
+    <div class="legend">
+      <span class="pill"><span class="num" style="background:var(--bad)">0</span><b>Ausente</b> — sem vivência ou evidência verificável</span>
+      <span class="pill"><span class="num" style="background:var(--warn)">0,5</span><b>Parcial</b> — vivência instável ou em desenvolvimento</span>
+      <span class="pill"><span class="num" style="background:var(--good)">1</span><b>Consolidada</b> — vivência regular, funcional, sustentada por fatos/parafatos</span>
+    </div>
+    <div class="hint">Considere fatos e parafatos <b>recorrentes</b>, não experiências isoladas, expectativas futuras ou autoimagem idealizada.</div>
+  </div>
+
+  <!-- FORMULÁRIO (gerado por JS) -->
+  <div id="fillSection"></div>
+
+  <!-- RESULTADOS -->
+  <div id="results" class="card">
+    <div class="pdfhead" id="pdfHead">
+      <div class="ttl">BILIBERTOGRAMA</div>
+      <div class="who" id="pdfWho"></div>
+    </div>
+    <h2 class="sec" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:10px"><span class="dot" style="background:var(--prop)"></span>Resultado da aferição</span>
+      <button class="btn" id="btnPdf" style="padding:7px 14px;font-size:13px">⬇ Baixar PDF</button>
+    </h2>
+
+    <div class="result-hero">
+      <div class="gauge"><canvas id="gaugeChart"></canvas>
+        <div class="gnum"><b id="indexVal">0</b><small>Índice Bilibertométrico</small></div>
+      </div>
+      <div class="indexmeta">
+        <div class="lvl" id="indexLevel">—</div>
+        <div class="rdesc" id="indexDesc"></div>
+      </div>
+    </div>
+
+    <div class="dims">
+      <div class="dim"><div class="nm" style="color:var(--energ)">Energética</div><div class="vl" id="dimE">0%</div>
+        <div class="dbar"><i id="barE" style="background:var(--energ)"></i></div><div class="muted" id="rawE"></div></div>
+      <div class="dim"><div class="nm" style="color:var(--fin)">Financeira</div><div class="vl" id="dimF">0%</div>
+        <div class="dbar"><i id="barF" style="background:var(--fin)"></i></div><div class="muted" id="rawF"></div></div>
+      <div class="dim"><div class="nm" style="color:var(--prop)">Propósito</div><div class="vl" id="dimP">0%</div>
+        <div class="dbar"><i id="barP" style="background:var(--prop)"></i></div><div class="muted" id="rawP"></div></div>
+    </div>
+
+    <div class="charts">
+      <div class="chartbox"><h3>Perfil por estágio (energética × financeira)</h3><canvas id="radarChart" height="260"></canvas></div>
+      <div class="chartbox"><h3>Pontuação por estágio</h3><canvas id="barChart" height="260"></canvas></div>
+    </div>
+
+    <h3 style="margin:22px 0 6px;font-size:14px;color:var(--muted)">Detalhamento por estágio e faixa etária</h3>
+    <div style="overflow-x:auto">
+      <table class="stages" id="stagesTable">
+        <thead><tr><th>Estágio</th><th>Faixa etária</th><th>Energética</th><th>Financeira</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- ANÁLISE -->
+    <div class="analysis">
+      <h3>Análise & próximo passo prioritário</h3>
+      <div class="nextstep">
+        <div class="k">Prioridade rumo à bilibertação</div>
+        <h4 id="prioTitle">—</h4>
+        <div id="prioBody"></div>
+      </div>
+      <div id="analysisExtra"></div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <b>Bilibertograma</b> · Qual seu percentual de bilibertação?<br>
+    Desenvolvido pelo Grupo de Pesquisa Consciencial sobre Bilibertação Inversora (GPC-BI) · ASSINVÉXIS
+  </footer>
+
+</div>
+
+<script>
+/* ===================== DADOS ===================== */
+const DATA = {"energetica": [{"estagio": "Jejuno", "marco": "Proficiência na mobilização básica das energias", "faixa": "Adolescência (15–20 anos)", "idade": [15, 20], "perguntas": ["Você possui tendência para ser mais casca-grossa, equilibrado ou esponja quanto às energias?", "Qual o nível de fluidez das energias? Ainda persistem bloqueios energéticos? Se sim, de qual natureza?", "Qual o grau de detalhismo das percepções durante a absorção das energias?", "Qual seu nível de proficiência perante os múltiplos modos de exteriorização de energias? Sabe modular entre exteriorização intermitente e ininterrupta, entre intensidade e sutileza, e entre fluxo amplo e direcionado?", "Sua vontade direciona suas energias ou as energias do ambiente ainda direcionam a sua vontade?", "Qual o grau de percepção e ativação dos chacras? Quais deles se destacam na sua manifestação?", "Você circula constantemente as energias? Já atingiu o estado vibracional pela vontade?", "Qual percentual do seu tempo você dedica às manobras energéticas? Você encara o energossoma enquanto veículo a ser qualificado por meio de priorização, disciplina e paciência?"], "referencial": "uma conscin aplicada em dominar as manobras do circuito fechado, estado vibracional, exteriorização e absorção de energias."}, {"estagio": "Iniciante", "marco": "Instalação cotidiana do EV", "faixa": "Pós-adolescência (20–26 anos)", "idade": [20, 26], "perguntas": ["Quantos EVs instala por dia? Qual a qualidade do seu track record bioenergético?", "Em condições normais, quanto tempo em média leva para instalar o estado vibracional?", "Já instalou o EV direto pela vontade, sem circular as energias previamente?", "Consegue realizar o encapsulamento energético a partir do EV?", "Passou pela experiência de instalar o EV no extrafísico?", "Qual a profundidade da sua autopesquisa quanto à relação do autodomínio emocional e do senso de cosmoética com a instalação do EV?", "Você faz o EV de modo terapêutico, para dissolver incômodos, ou profilático, visando a homeostase e antecipação da assistência?", "Qual o grau de intensidade e abrangência dos efeitos do seu estado vibracional?"], "referencial": "uma conscin que utiliza o estado vibracional com alta frequência no dia a dia."}, {"estagio": "Intermediário", "marco": "Mapeamento da sinalética energoparapsíquica", "faixa": "Pós-adolescência (20–26 anos)", "idade": [20, 26], "perguntas": ["Qual o grau de autoconsciência sensorial? Como lida com as próprias emoções e a sensibilidade energética?", "Você registra diariamente as percepções holossomáticas? Qual análise realiza de tais informações coletadas?", "Você tem clareza dos sinais de conexão com os amparadores de função? E como lida com os assediadores de função?", "Quantas sinaléticas possui mapeadas? De 1 a 5, qual o grau de confiabilidade deste mapeamento?", "Como avalia as sincronicidades multidimensionais de modo a tomar decisões mais assertivas?", "Você reconhece o próprio modo de pensenizar e as alterações decorrentes da interação com consciências extrafísicas e determinados padrões de energia? Qual o seu padrão homeostático de referência?", "Compreende a sinalética enquanto a segunda megaquisição ou conquista da consciência, passível a partir da vontade? Qual seu grau de autoconfiança perante o parapsiquismo lúcido?", "Quais escolhas já realizou com base em uma sinalética parapsíquica? Quais foram os efeitos de tais decisões?"], "referencial": "uma conscin com sinaléticas energoparapsíquicas mapeadas de modo funcional para comunicação multidimensional."}, {"estagio": "Maduro", "marco": "Prática da tarefa energética pessoal", "faixa": "Adultidade (26–40 anos)", "idade": [26, 40], "perguntas": ["Como observa a conexão da 1h de prática tenepessística com as demais 23h do dia?", "Qual o nível de entrosamento com o amparador extrafísico de função da tenepes?", "Realiza a tenepes com regularidade e constância diária, dentro do horário planejado?", "Como avalia a qualidade da pensenidade durante a prática da tenepes? Você ainda costuma pensar mal dos outros no cotidiano?", "Qual a profundidade dos registros no diário da tenepes?", "Como realiza o encaminhamento dos pedidos de tenepes recebidos?", "Quais técnicas utiliza em conjunto com a tenepes para otimização da assistência energética e parapsíquica?", "Qual o grau de relaxamento, passividade alerta e transe parapsíquico em consonância com os fluxos energéticos, assistenciais e extrafísicos da tenepes?"], "referencial": "uma conscin tenepessista com experiência crescente na assistencialidade multidimensional."}, {"estagio": "Veterano", "marco": "Iscagem interassistencial lúcida", "faixa": "Adultidade (26–40 anos)", "idade": [26, 40], "perguntas": ["Você chega sempre com antecedência nos compromissos com intuito de preparar energeticamente o ambiente para as ocasiões interassistenciais?", "Como lida com os incômodos e desconfortos ao receber uma consciex patológica na própria psicosfera?", "Com que frequência desencadeia o procedimento de iscagem lúcida nas interações cotidianas? E autencapsulamento?", "Qual seu nível de arrimo assistencial lúcido perante às demandas externas?", "Qual a extensão e qualidade do campo bioenergético instalado por você derivado do próprio nível de cosmoética no cotidiano?", "Qual o grau de lucidez perante as consciexes e energias gravitantes a serem encaminhadas?", "Quais suas técnicas funcionais para a prática do binômio assim-desassim?", "Quais tipos de patologias você atende de modo especializado por meio da iscagem interassistencial? Qual o seu limite de atendimento?"], "referencial": "uma conscin que realiza iscagens de modo consciente no cotidiano, com finalidade assistencial e domínio do binômio assim-desassim."}, {"estagio": "Biliberto", "marco": "Autodomínio energético", "faixa": "Meia-idade (40–65 anos)", "idade": [40, 65], "perguntas": ["Possui livre acesso à Central Extrafísica da Energia (CEE)?", "Desencadeia, apenas pela vontade pessoal, procedimentos bioenergéticos ao modo do EV, arco voltaico e megaeuforização?", "Costuma realizar a interleitura parapsicosférica, obtendo heterodiagnósticos precisos?", "Mantém a base intrafísica e a própria energosfera livre, sem interferências de qualquer tipo?", "Sustenta equilíbrio íntimo antes, durante e depois dos procedimentos da interassistencialidade?", "Realiza o processo de parassepsia antecipada, da limpeza holopensênica de determinado ambiente antes do início de algum encontro de pessoas ou evento público no local?", "Qual o nível de desassedialidade da própria força presencial?", "Demonstra ser capaz de sustentar trabalho assistencial em grupos cada vez maiores e complexos, com vistas ao atingimento da ofiex?"], "referencial": "uma conscin entre o patamar evolutivo do epicon lúcido e da desperticidade, expressando energia consciencial livre máxima pela manifestação energossomática sem tropeços de qualquer natureza, em quaisquer procedimentos ou manobras energéticas."}], "financeira": [{"estagio": "Jejuno", "marco": "Escolha da carreira", "faixa": "Adolescência (15–20 anos)", "idade": [15, 20], "perguntas": ["Você compreende a distinção entre profissão e proéxis? A carreira almejada constitui meio convergente para a consecução da programação existencial?", "A profissão escolhida apresenta boas condições em termos de dedicação de tempo, remuneração e oferta de trabalho?", "Sua escolha profissional possibilita atuação em holopensene assistencial, por exemplo, ao modo das áreas da saúde e educação?", "Você entrevistou profissionais da área para entender a prática dessa profissão? Qual a síntese dos prós e contras observados?", "Você está pensando na carreira profissional de modo precoce, no tempo esperado ou de maneira tardia?", "Seu perfil predominante é: empreendedor, profissional liberal, autônomo, funcionário ou servidor público? O quanto isso influencia na sua escolha profissional?", "De que modo a carreira escolhida lhe ajuda no desenvolvimento de trafores e realização de recins?", "Há alguma brecha anticosmoética na área de ocupação? A carreira pretendida representa automimese dispensável?"], "referencial": "uma conscin lúcida quanto à escolha da carreira mais adequada à autoproéxis."}, {"estagio": "Iniciante", "marco": "Formação profissional", "faixa": "Pós-adolescência (20–26 anos)", "idade": [20, 26], "perguntas": ["Você procura formações enquanto fuga ou enfrentamento dos desafios profissionais?", "Quais competências profissionais já possui consolidadas e quais necessita qualificar? Qual seu desempenho quanto às soft skills e hard skills?", "Você sabe conjugar o ensino formal com o autodidatismo, dando maior ênfase ao segundo porém sem banalizar o primeiro?", "Qual a qualidade do investimento em experiências profissionais práticas durante o período de formação?", "De que modo as especializações auxiliam na sua diferenciação técnica e geração de valor perante o mercado de trabalho? Você sabe comunicar isso de modo a colher bons resultados?", "Qual o seu megafoco profissional? Você já possui identidade especializada na sua área de trabalho? Se não, qual seu planejamento para constituí-la?", "Como as experiências no voluntariado conscienciológico contribuem para sua qualificação enquanto profissional?", "Você aplica conhecimentos da sua profissão visando agregar no trabalho voluntário, de modo funcional ao Paradigma Consciencial e sem ocasionar em conflitos de interesse?"], "referencial": "uma conscin com megafoco profissional claro e formação especializada funcional."}, {"estagio": "Intermediário", "marco": "Autonomia financeira", "faixa": "Pós-adolescência (20–26 anos)", "idade": [20, 26], "perguntas": ["Qual a extensão da sua autonomia financeira: garante apenas a sobrevivência básica ou permite o investimento em educação, reserva financeira, lazer, doações e atendimento a imprevistos?", "Qual o preço da sua autonomia econômica quanto à liberdade de atuação proexológica? Você se encontra atado a alguma algema de ouro?", "Qual nível de organização vem empregando nas finanças pessoais? Sua gestão financeira é inexistente, feita na base do improviso ou objetivamente planejada?", "Você busca adquirir conhecimento técnico sobre finanças e meios para alargar sua autonomia, ou ainda vive fugindo deste assunto e cultivando dependências?", "Como avalia a própria capacidade de autodomínio consciencial e tomada de decisões? Sua autonomia financeira é coerente com a maturidade e liberdade nas demais áreas da vida?", "Você é economicamente flexível para oportunidades interassistenciais ou não muda seus planos financeiros por nada? De que modo maneja a própria autonomia com interdependência às demandas grupais?", "Como encara o desafio de manutenção e ampliação da autonomia financeira: com dificuldade, proatividade ou serenidade? Sabe abrir mão de desejos em prol de objetivos sem excessos nem recalques?", "Como avalia sua autonomia financeira quanto à faixa etária e prospectiva proexológica: precoce, adequada ou tardia?"], "referencial": "uma conscin com boa autonomia financeira, na qual a remuneração mensal é igual ou superior às despesas de subsistência pessoal."}, {"estagio": "Maduro", "marco": "Reserva de emergência", "faixa": "Adultidade (26–40 anos)", "idade": [26, 40], "perguntas": ["Você é capaz de gerar aumento de renda e continuar vivendo um padrão de vida em patamar abaixo do que ganha?", "Qual o saldo atual do seu buffer financeiro? É um valor apertado, excessivo ou condizente com sua realidade?", "Sua reserva de emergência é aplicada em local seguro, segregado de outras quantias, com liquidez diária e retorno envolvendo baixo risco?", "Já precisou utilizar-se da reserva de emergência? Qual medida profilática pode ser implementada para prevenção de novas ocorrências neste sentido?", "Suas finanças lhe proporcionam estabilidade de vida de modo a assumir compromissos proexológicos maiores?", "Sua pensenidade econômica é desleixada, apreensiva, gananciosa ou funcional? Dinheiro é problema ou solução para você?", "Como vem alargando sua autonomia financeira? A carreira profissional encontra-se consolidada, permitindo passos maiores em termos de iniciativas, retorno financeiro e liberdade de tempo?", "Qual assistência você já realizou a partir de seus próprios meios financeiros?"], "referencial": "uma conscin financeiramente organizada e possuidora de reserva financeira capaz de suportar ao menos 6 meses de despesas fixas."}, {"estagio": "Veterano", "marco": "Construção do pé-de-meia", "faixa": "Adultidade (26–40 anos)", "idade": [26, 40], "perguntas": ["Você sabe distinguir entre ativos e passivos financeiros, bem como o valor do dinheiro no tempo? Já possui um plano claro, seguro e factível para atingir a independência financeira?", "Qual percentual da renda mensal você consegue separar para a construção do pé-de-meia? Com base neste valor e no seu plano, em qual prazo planeja assinar a sua carta de alforria intrafísica?", "Você ainda corre riscos excessivos e desnecessários para acelerar o pé-de-meia? Possui a ilusão de ser mais inteligente que os demais e querer vencer o mercado?", "Você investe visando retornos de curto, médio ou longo prazo? Já utiliza, com técnica e racionalidade, da estratégia de recebimento recorrente de dividendos a serem reaplicados para construção da liberdade financeira almejada?", "Como planeja adquirir bens pessoais, ao modo de imóvel e veículo próprio? Tais decisões são coerentes com o momento de vida e os objetivos proexológicos?", "Qual a influência da riqueza alcançada sobre a manifestação pessoal: mantém-se centrado e moderado ou tornou-se nouveau riche seduzido pelo dinheiro?", "Você já colhe benefícios prévios da construção de pé-de-meia, a exemplo de maior disponibilidade de tempo e possibilidade de doações para empreendimentos libertários?", "Seu acúmulo de patrimônio até agora anda em igualdade com o acumulado da produtividade interassistencial?"], "referencial": "uma conscin financeiramente disciplinada e autorresponsável, que realiza aportes regulares visando a independência financeira futura."}, {"estagio": "Biliberto", "marco": "Independência econômica", "faixa": "Meia-idade (40–65 anos)", "idade": [40, 65], "perguntas": ["O rendimento do seu patrimônio conseguirá bancar, até o fim da existência, o custo de vida ideal para a proéxis? Seu pé-de-meia é suficiente para atender também ao mecenato cosmoético?", "Como lida com a eliminação do próprio ego profissional? Está preparado ou ainda possui apego à carreira e rotina estabelecida?", "Como soube aproveitar os aportes existenciais, financeiros ou não, para constituição do seu pé-de-meia? Considera que alcançou a independência financeira de modo precoce, no tempo certo ou tardiamente?", "Sua independência financeira possui bases cosmoéticas? Os efeitos da sua liberdade financeira refletem na expressão da mentalidade de consciex no intrafísico ou geram desvio de proéxis em função do bambúrrio?", "De que modo pretende utilizar a disponibilidade de tempo, talento e dinheiro para movimentar positivamente as contas correntes holocármicas?", "Qual seu nível de liberdade para exposição das próprias ideias assistenciais? Você já assume a condição de pesquisador independente?", "Você possui rotina de dedicação proexológica full time em virtude dos proventos pessoais? Já vivencia a técnica do turno intelectual, visando o aprofundamento verponogênico?", "Como pode ajudar outras pessoas a atingirem a independência financeira de modo funcional? O que você já fez nesse sentido?"], "referencial": "uma conscin dedicada integralmente à proéxis a partir da dispensa do trabalho formal em função dos rendimentos do patrimônio pessoal serem maiores que as despesas correntes e futuras."}], "proposito": {"perguntas": ["Você utiliza, de modo lúcido e convergente, a liberdade energética e a liberdade financeira já conquistadas para ampliar a disponibilidade interassistencial e a consecução da proéxis?", "A busca por domínio energético e independência financeira está predominantemente centrada na interassistência, sem desvio para poder, status, fuga, controle ou autossuficiência egocêntrica?", "Há coerência prática entre hábitos energéticos, decisões financeiras, rotina útil e prioridades proexológicas?", "A liberdade já conquistada tem produzido efeitos assistenciais concretos, ao modo de maior disponibilidade consciencial, sustentabilidade energética, doação tarística, produtividade gesconológica e participação em empreendimentos libertários?"], "referencial": "uma conscin com coerência cosmoética que objetiva atingir a bilibertação com intencionalidade assistencial."}};
+
+const STAGE_ORDER = ["Jejuno","Iniciante","Intermediário","Maduro","Veterano","Biliberto"];
+
+const PROXSTEP = {
+  energetica:{
+    "Jejuno":"Consolidar a mobilização básica das energias — circuito fechado, estado vibracional, exteriorização e absorção — com prática diária, dissolvendo bloqueios e migrando de 'esponja' para 'equilibrado/casca-grossa'.",
+    "Iniciante":"Elevar a frequência diária de instalação do EV até torná-lo hábito, reduzindo o tempo de instalação e buscando acioná-lo direto pela vontade.",
+    "Intermediário":"Iniciar/aprofundar o registro diário das percepções holossomáticas e mapear as sinaléticas energoparapsíquicas, validando a confiabilidade de cada sinal.",
+    "Maduro":"Implantar a tarefa energética pessoal (tenepes) com horário fixo e constância diária, qualificando a pensenidade e o diário da prática.",
+    "Veterano":"Praticar a iscagem interassistencial lúcida no cotidiano, dominando o binômio assim-desassim e o autencapsulamento.",
+    "Biliberto":"Refinar o autodomínio energético rumo à energia consciencial livre máxima e à força presencial desassediadora, sustentando assistência em grupos crescentes."
+  },
+  financeira:{
+    "Jejuno":"Clarificar a escolha de carreira convergente com a proéxis: entrevistar profissionais da área e avaliar tempo, remuneração e holopensene assistencial.",
+    "Iniciante":"Estruturar a formação profissional com megafoco claro, conjugando ensino formal e autodidatismo, e acumulando experiência prática.",
+    "Intermediário":"Alcançar autonomia financeira (renda ≥ despesas de subsistência) com gestão objetivamente planejada e estudo técnico de finanças.",
+    "Maduro":"Construir a reserva de emergência (≥ 6 meses de despesas fixas) em aplicação segura, líquida e segregada, vivendo abaixo do que ganha.",
+    "Veterano":"Iniciar a construção do pé-de-meia com aportes regulares, distinguindo ativos de passivos e definindo plano e prazo para a alforria intrafísica.",
+    "Biliberto":"Consolidar a independência financeira (renda passiva > despesas vitalícias) com bases cosmoéticas e mecenato tarístico."
+  },
+  proposito:"Alinhar energia e dinheiro à interassistência: converter a liberdade conquistada em disponibilidade proexológica concreta, sem desvio para poder, status, fuga ou autossuficiência egóica."
+};
+
+const LEVELS = [
+  {min:0,  lvl:"Início da jornada bilibertológica", d:"Fundamentos a estabelecer nos eixos energético e/ou financeiro."},
+  {min:25, lvl:"Bilibertação incipiente",            d:"Bases iniciais em formação; foco em consolidar os estágios iniciais."},
+  {min:45, lvl:"Bilibertação em desenvolvimento",    d:"Progresso consistente; atenção ao equilíbrio entre os eixos."},
+  {min:65, lvl:"Bilibertação madura",                d:"Conquistas sólidas; refinamento dos estágios avançados."},
+  {min:82, lvl:"Bilibertação avançada",              d:"Próximo do autodomínio energético e da independência financeira."},
+  {min:95, lvl:"Bilibertação plena (Biliberto)",     d:"Liberdade energética e financeira a serviço da interassistência."}
+];
+
+const CONS = 6;      // estágio consolidado: >=6/8
+const CONS_P = 3;    // propósito consolidado: >=3/4
+
+/* ===================== RENDER FORMULÁRIO ===================== */
+function optHtml(name){
+  return `<div class="opts" role="radiogroup">
+    <label class="o0"><input type="radio" name="${name}" value="0" aria-label="0 — Ausente"><span>0</span></label>
+    <label class="o5"><input type="radio" name="${name}" value="0.5" aria-label="0,5 — Parcial"><span>0,5</span></label>
+    <label class="o1"><input type="radio" name="${name}" value="1" aria-label="1 — Consolidada"><span>1</span></label>
+  </div>`;
+}
+function stageHtml(eixo, idx, st){
+  const cls = eixo==="E"?"e":"f";
+  let qs = st.perguntas.map((q,qi)=>`
+    <div class="q">
+      <div class="qn">${qi+1}</div>
+      <div class="qt">${q}</div>
+      ${optHtml(`${eixo}_${idx}_${qi}`)}
+    </div>`).join("");
+  return `<details class="stage ${cls}" data-eixo="${eixo}" data-idx="${idx}">
+    <summary>
+      <span class="stnum">${idx+1}</span>
+      <span class="stinfo"><span class="stname">${st.estagio}</span><span class="meta"> · ${st.faixa}</span></span>
+      <span class="stcount">0/8</span>
+      <span class="chev">▶</span>
+    </summary>
+    <div class="stbody">
+      <div class="stmarco"><b>Marco:</b> ${st.marco}</div>
+      <div class="stref"><b>Referencial:</b> ${st.referencial}</div>
+      ${qs}
+    </div>
+  </details>`;
+}
+function axisHead(letter,title,sub,color,axId){
+  return `<div class="sechead">
+    <div class="ic" style="background:linear-gradient(140deg,${color}cc,${color})">${letter}</div>
+    <div><div class="tt">${title}</div><div class="st">${sub}</div></div>
+    <div class="axp"><b id="${axId}">0/48</b><div class="pb"><i id="${axId}bar" style="background:${color}"></i></div></div>
+  </div>`;
+}
+function buildForm(){
+  const root = document.getElementById("fillSection");
+  let html = "";
+  html += `<div class="card">`+axisHead("A","Liberdade energética","Domínio das energias conscienciais","#df8413","axE");
+  DATA.energetica.forEach((st,i)=> html += stageHtml("E",i,st));
+  html += `</div>`;
+  html += `<div class="card">`+axisHead("B","Liberdade financeira","Pé-de-meia","#3b6fd4","axF");
+  DATA.financeira.forEach((st,i)=> html += stageHtml("F",i,st));
+  html += `</div>`;
+  // Propósito
+  let pq = DATA.proposito.perguntas.map((q,qi)=>`
+    <div class="q"><div class="qn">${qi+1}</div><div class="qt">${q}</div>${optHtml(`P_0_${qi}`)}</div>`).join("");
+  html += `<div class="card">`+axisHead("C","Propósito bilibertogênico","Intencionalidade cosmoética interassistencial","#7a52b3","axP")+
+    `<div class="stbody" style="border:none;padding:6px 0 0;background:transparent">
+      <div class="stref"><b>Referencial:</b> ${DATA.proposito.referencial}</div>
+      ${pq}</div></div>`;
+  // toolbar
+  html += `<div class="toolbar">
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="progtxt" id="progTxt"><b>0</b> / 100</div>
+    <button class="btn primary" id="btnCalc">Ver resultado</button>
+    <button class="btn" id="btnSave">Salvar</button>
+    <button class="btn ghost" id="btnExport">Exportar</button>
+    <button class="btn ghost" id="btnImport">Importar</button>
+    <button class="btn ghost" id="btnClear">Limpar</button>
+    <input type="file" id="fileInput" accept="application/json" style="display:none">
+  </div>`;
+  root.innerHTML = html;
+  root.addEventListener("change", e=>{
+    if(!e.target.matches("input[type=radio]")) return;
+    updateProgress();
+    const d=e.target.closest("details.stage");
+    if(d && d._justDone){ setTimeout(()=>autoAdvance(d),260); }
+  });
+  document.getElementById("btnCalc").onclick = calcular;
+  document.getElementById("btnSave").onclick = saveLocal;
+  document.getElementById("btnExport").onclick = exportJson;
+  document.getElementById("btnImport").onclick = ()=>document.getElementById("fileInput").click();
+  document.getElementById("fileInput").onchange = importJson;
+  document.getElementById("btnClear").onclick = clearAll;
+}
+function autoAdvance(d){
+  const next=d.nextElementSibling;
+  if(next && next.matches && next.matches("details.stage")){
+    d.open=false; next.open=true;
+    next.querySelector("summary").scrollIntoView({behavior:"smooth",block:"center"});
+  }
+}
+
+/* ===================== COLETA E PONTUAÇÃO ===================== */
+function getVal(name){
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? parseFloat(el.value) : null;
+}
+function collect(){
+  const eixo = {E:[],F:[]};
+  ["E","F"].forEach(k=>{
+    const arr = k==="E"?DATA.energetica:DATA.financeira;
+    arr.forEach((st,i)=>{
+      let sum=0, answered=0;
+      st.perguntas.forEach((_,qi)=>{ const v=getVal(`${k}_${i}_${qi}`); if(v!==null){sum+=v;answered++;} });
+      eixo[k].push({score:sum, answered});
+    });
+  });
+  let pSum=0,pAns=0;
+  DATA.proposito.perguntas.forEach((_,qi)=>{ const v=getVal(`P_0_${qi}`); if(v!==null){pSum+=v;pAns++;} });
+  return {E:eixo.E, F:eixo.F, P:{score:pSum,answered:pAns}};
+}
+function setAx(id,n,total){
+  const b=document.getElementById(id), bar=document.getElementById(id+"bar");
+  if(b) b.textContent=`${n}/${total}`;
+  if(bar) bar.style.width=(n/total*100)+"%";
+}
+function updateProgress(){
+  // estado por pergunta
+  document.querySelectorAll("#fillSection .q").forEach(q=>{
+    q.classList.toggle("answered", !!q.querySelector("input:checked"));
+  });
+  // estado por estágio (selo + done + auto-avanço)
+  document.querySelectorAll("#fillSection details.stage").forEach(d=>{
+    const ans=d.querySelectorAll("input:checked").length;
+    const badge=d.querySelector(".stcount"); if(badge) badge.textContent=`${ans}/8`;
+    const wasDone=d.classList.contains("done"), isDone=ans===8;
+    d.classList.toggle("done", isDone);
+    d._justDone = isDone && !wasDone;
+  });
+  // progresso por eixo
+  const cnt=p=>document.querySelectorAll(`#fillSection input[name^="${p}"]:checked`).length;
+  const aE=cnt("E_"), aF=cnt("F_"), aP=cnt("P_");
+  setAx("axE",aE,48); setAx("axF",aF,48); setAx("axP",aP,4);
+  // total
+  const n=aE+aF+aP, pct=n;
+  const bar=document.getElementById("progBar"), txt=document.getElementById("progTxt");
+  if(bar){ bar.style.width=pct+"%"; txt.innerHTML=`<b>${n}</b> / 100`; }
+  const top=document.getElementById("topbar"); if(top){ top.style.width=pct+"%"; top.style.boxShadow = n>0?"0 0 12px rgba(244,217,133,.55)":"none"; }
+}
+
+/* ===================== ANÁLISE ===================== */
+function classify(score,max){ // returns tag
+  const r=score/max;
+  if(r>=CONS/8) return {t:"cons",l:"Consolidado"};
+  if(r>=3/8)    return {t:"dev", l:"Em desenvolvimento"};
+  return {t:"inc", l:"Incipiente"};
+}
+function firstGap(arr){ for(let i=0;i<arr.length;i++){ if(arr[i].score<CONS) return i; } return -1; }
+
+function ageStatus(age, idxStage){
+  if(!age) return null;
+  const st = (idxStage<0? DATA.energetica[5] : DATA.energetica[idxStage]);
+  const [lo,hi] = st.idade;
+  if(age>hi) return {s:"atraso", txt:`Você está na faixa de ${age} anos, acima da faixa referencial deste estágio (${st.faixa}). Pela técnica da invéxis, esta é uma frente a priorizar para recuperar o ritmo bilibertológico.`};
+  if(age<lo) return {s:"precoce", txt:`Aos ${age} anos você já trabalha um estágio cuja faixa referencial é ${st.faixa} — sinal de precocidade e invexibilidade.`};
+  return {s:"adequado", txt:`Aos ${age} anos você está dentro da faixa referencial deste estágio (${st.faixa}).`};
+}
+
+function analyze(c, age){
+  const gE=firstGap(c.E), gF=firstGap(c.F);
+  const totE=c.E.reduce((a,b)=>a+b.score,0), totF=c.F.reduce((a,b)=>a+b.score,0), totP=c.P.score;
+  const pctE=totE/48, pctF=totF/48;
+
+  let priority; // {eixo,stageIdx,stageKey} or {eixo:'P'} or {eixo:'done'}
+  if(gE===-1 && gF===-1){
+    if(totP < CONS_P) priority={eixo:"P"};
+    else priority={eixo:"done"};
+  } else if(gE===-1){ priority={eixo:"F",idx:gF};
+  } else if(gF===-1){ priority={eixo:"E",idx:gE};
+  } else {
+    if(gE<gF) priority={eixo:"E",idx:gE};
+    else if(gF<gE) priority={eixo:"F",idx:gF};
+    else priority = (c.E[gE].score<=c.F[gF].score) ? {eixo:"E",idx:gE} : {eixo:"F",idx:gF};
+  }
+
+  // build priority narrative
+  let title, body, prox, stageKey=null, eixoName="";
+  if(priority.eixo==="done"){
+    title="Bilibertação plena — sustentar e doar";
+    eixoName="Integração";
+    prox="Todos os estágios consolidados. O foco passa a ser sustentar a condição e ampliar o mecenato cosmoético e os empreendimentos libertários.";
+  } else if(priority.eixo==="P"){
+    title="Propósito bilibertogênico";
+    eixoName="Propósito";
+    prox=PROXSTEP.proposito;
+  } else {
+    const isE = priority.eixo==="E";
+    const st = (isE?DATA.energetica:DATA.financeira)[priority.idx];
+    stageKey = st.estagio;
+    eixoName = isE?"Liberdade energética":"Liberdade financeira";
+    title = `${eixoName} · Estágio ${st.estagio} — ${st.marco}`;
+    prox = PROXSTEP[isE?"energetica":"financeira"][st.estagio];
+  }
+
+  // strengths & to-develop lists
+  const strengths=[], todo=[];
+  ["E","F"].forEach(k=>{
+    const arr=k==="E"?c.E:c.F, nm=k==="E"?"Energética":"Financeira", src=k==="E"?DATA.energetica:DATA.financeira;
+    arr.forEach((s,i)=>{
+      const cl=classify(s.score,8);
+      if(cl.t==="cons") strengths.push(`${nm} · ${src[i].estagio} (${s.score}/8)`);
+      else if(cl.t==="inc") todo.push(`${nm} · ${src[i].estagio} (${s.score}/8)`);
+    });
+  });
+
+  // balance between eixos
+  let balance="";
+  const diff=Math.abs(pctE-pctF)*100;
+  if(diff>=20){
+    const lower = pctE<pctF?"energética":"financeira";
+    balance = `Há um desequilíbrio relevante entre os eixos (${Math.round(diff)} p.p.). A liberdade <b>${lower}</b> está mais atrasada e tende a ser o gargalo da bilibertação — a condição large superior exige ambas as liberdades.`;
+  } else {
+    balance = "Os eixos energético e financeiro caminham de forma relativamente equilibrada — bom sinal para a bilibertação conjunta.";
+  }
+
+  const ageInfo = (priority.eixo==="E"||priority.eixo==="F") ? ageStatus(age, priority.idx) : null;
+
+  return {gE,gF,totE,totF,totP,pctE,pctF,priority,title,prox,eixoName,stageKey,strengths,todo,balance,ageInfo};
+}
+
+/* ===================== EXIBIR RESULTADO ===================== */
+let gaugeC, radarC, barC;
+function calcular(){
+  const c = collect();
+  const a = analyze(c, parseInt(document.getElementById("f_idade").value)||0);
+  const total = a.totE + a.totF + a.totP; // 0..100
+
+  // index gauge
+  document.getElementById("indexVal").textContent = Number.isInteger(total)? total : total.toFixed(1);
+  const L = [...LEVELS].reverse().find(x=>total>=x.min) || LEVELS[0];
+  document.getElementById("indexLevel").textContent = L.lvl;
+  document.getElementById("indexDesc").textContent = L.d;
+
+  const setDim=(id,bar,raw,val,max)=>{
+    const pct=Math.round(val/max*100);
+    document.getElementById(id).textContent=pct+"%";
+    document.getElementById(bar).style.width=pct+"%";
+    document.getElementById(raw).textContent=`${(Number.isInteger(val)?val:val.toFixed(1))} / ${max} pts`;
+  };
+  setDim("dimE","barE","rawE",a.totE,48);
+  setDim("dimF","barF","rawF",a.totF,48);
+  setDim("dimP","barP","rawP",a.totP,4);
+
+  drawGauge(total);
+  drawRadar(c);
+  drawBar(c);
+  fillTable(c);
+
+  // priority
+  document.getElementById("prioTitle").textContent = a.title;
+  let body = `<p style="margin:6px 0 10px">${a.prox}</p>`;
+  if(a.ageInfo){
+    const cls = a.ageInfo.s==="atraso"?"prio":"";
+    body += `<div class="callout ${cls}">${a.ageInfo.txt}</div>`;
+  }
+  document.getElementById("prioBody").innerHTML = body;
+
+  // extra analysis
+  let ex = `<div class="callout">${a.balance}</div>`;
+  ex += `<h3 style="font-size:14px;margin-top:14px">Gargalos por eixo</h3><ul class="clean">`;
+  ex += `<li><b>Energética:</b> ${a.gE===-1?"todos os estágios consolidados ✓":"primeiro gargalo no estágio <b>"+DATA.energetica[a.gE].estagio+"</b> ("+DATA.energetica[a.gE].marco+")"}</li>`;
+  ex += `<li><b>Financeira:</b> ${a.gF===-1?"todos os estágios consolidados ✓":"primeiro gargalo no estágio <b>"+DATA.financeira[a.gF].estagio+"</b> ("+DATA.financeira[a.gF].marco+")"}</li>`;
+  ex += `</ul>`;
+  if(a.strengths.length){
+    ex += `<h3 style="font-size:14px;margin-top:14px">Pontos fortes consolidados</h3><ul class="clean">`+
+      a.strengths.map(s=>`<li>${s}</li>`).join("")+`</ul>`;
+  }
+  if(a.todo.length){
+    ex += `<h3 style="font-size:14px;margin-top:14px">Estágios incipientes a desenvolver</h3><ul class="clean">`+
+      a.todo.map(s=>`<li>${s}</li>`).join("")+`</ul>`;
+  }
+  ex += `<div class="ortos">
+    <div class="orto">
+      <p>“Na intrafisicalidade, em termos holossomáticos, o pé-de-meia é essencial para o desenvolvimento do mentalsoma da conscin.”</p>
+      <span class="src"><b>Sustentabilidade</b> · Léxico de Ortopensatas, Volume III, Pág. 1.881</span>
+    </div>
+    <div class="orto">
+      <p>“Se você deseja adquirir algo que sirva para tudo, adquira o domínio energético e dedique-se à interassistencialidade fraterna.”</p>
+      <span class="src"><b>Autodomínio</b> · Léxico de Ortopensatas, Volume I, Pág. 234</span>
+    </div>
+  </div>`;
+  document.getElementById("analysisExtra").innerHTML = ex;
+
+  document.getElementById("results").style.display="block";
+  window._lastAnalysis = {c,a,total};
+  document.getElementById("results").scrollIntoView({behavior:"smooth"});
+}
+
+function fillTable(c){
+  const tb = document.querySelector("#stagesTable tbody"); tb.innerHTML="";
+  STAGE_ORDER.forEach((name,i)=>{
+    const e=c.E[i], f=c.F[i];
+    const ce=classify(e.score,8), cf=classify(f.score,8);
+    tb.insertAdjacentHTML("beforeend", `<tr>
+      <td class="th-cell"><b>${name}</b><div class="muted" style="font-size:11px">${DATA.energetica[i].marco} · ${DATA.financeira[i].marco}</div></td>
+      <td class="muted" data-l="Faixa etária">${DATA.energetica[i].faixa}</td>
+      <td data-l="Energética">${e.score}/8 &nbsp;<span class="tag ${ce.t}">${ce.l}</span></td>
+      <td data-l="Financeira">${f.score}/8 &nbsp;<span class="tag ${cf.t}">${cf.l}</span></td>
+    </tr>`);
+  });
+  const cp=classify(c.P.score,4);
+  tb.insertAdjacentHTML("beforeend", `<tr>
+    <td class="th-cell"><b>Propósito bilibertogênico</b></td><td class="muted" data-l="Eixo">Integração</td>
+    <td colspan="2" data-l="Pontuação">${c.P.score}/4 &nbsp;<span class="tag ${cp.t}">${cp.l}</span></td></tr>`);
+}
+
+/* ===================== GRÁFICOS ===================== */
+const C_ENERG="#ff9900", C_FIN="#4a86e8", C_GRID="#e4e1d6", C_TXT="#4a4d63", C_TICK="#8a8ea3";
+function drawGauge(total){
+  const ctx=document.getElementById("gaugeChart");
+  if(gaugeC) gaugeC.destroy();
+  const col = total>=82?"#2ea36f":total>=45?"#4a86e8":"#e8a000";
+  gaugeC=new Chart(ctx,{type:"doughnut",data:{datasets:[{data:[total,100-total],
+    backgroundColor:[col,"rgba(255,255,255,.14)"],borderWidth:0,circumference:180,rotation:270,cutout:"72%"}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+}
+function pctArr(arr,max){ return arr.map(s=>Math.round(s.score/max*100)); }
+function drawRadar(c){
+  const ctx=document.getElementById("radarChart");
+  if(radarC) radarC.destroy();
+  radarC=new Chart(ctx,{type:"radar",data:{labels:STAGE_ORDER,datasets:[
+    {label:"Energética",data:pctArr(c.E,8),borderColor:C_ENERG,backgroundColor:"rgba(255,153,0,.16)",pointBackgroundColor:C_ENERG},
+    {label:"Financeira",data:pctArr(c.F,8),borderColor:C_FIN,backgroundColor:"rgba(74,134,232,.14)",pointBackgroundColor:C_FIN}
+  ]},options:{responsive:true,plugins:{legend:{labels:{color:C_TXT}}},
+    scales:{r:{min:0,max:100,ticks:{color:C_TICK,backdropColor:"transparent",stepSize:25},
+      grid:{color:C_GRID},angleLines:{color:C_GRID},pointLabels:{color:C_TXT,font:{size:11}}}}}});
+}
+function drawBar(c){
+  const ctx=document.getElementById("barChart");
+  if(barC) barC.destroy();
+  barC=new Chart(ctx,{type:"bar",data:{labels:STAGE_ORDER,datasets:[
+    {label:"Energética",data:c.E.map(s=>s.score),backgroundColor:C_ENERG,borderRadius:4},
+    {label:"Financeira",data:c.F.map(s=>s.score),backgroundColor:C_FIN,borderRadius:4}
+  ]},options:{responsive:true,plugins:{legend:{labels:{color:C_TXT}}},
+    scales:{y:{min:0,max:8,ticks:{color:C_TICK,stepSize:2},grid:{color:C_GRID}},
+      x:{ticks:{color:C_TXT,font:{size:11}},grid:{display:false}}}}});
+}
+
+/* ===================== GERAR PDF ===================== */
+async function gerarPDF(){
+  if(!window._lastAnalysis){ alert("Calcule o resultado primeiro."); return; }
+  const btn=document.getElementById("btnPdf"), old=btn.textContent;
+  btn.textContent="Gerando…"; btn.disabled=true;
+  // preencher cabeçalho do PDF
+  const nome=document.getElementById("f_nome").value||"—";
+  const data=document.getElementById("f_data").value||"";
+  const idade=document.getElementById("f_idade").value;
+  document.getElementById("pdfWho").innerHTML =
+    `<b>${nome}</b>${idade?` · ${idade} anos`:""}<br>${data?data.split("-").reverse().join("/"):""}`;
+  document.getElementById("pdfHead").style.display="flex";
+  btn.style.visibility="hidden";
+  const node=document.getElementById("results");
+  try{
+    const canvas=await html2canvas(node,{scale:2,backgroundColor:"#ffffff",useCORS:true,
+      windowWidth:node.scrollWidth});
+    const img=canvas.toDataURL("image/jpeg",0.95);
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF("p","mm","a4");
+    const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+    const margin=8, iw=pw-margin*2, ih=canvas.height*iw/canvas.width;
+    let left=ih, pos=margin;
+    if(ih<=ph-margin*2){
+      pdf.addImage(img,"JPEG",margin,margin,iw,ih);
+    }else{
+      // paginar
+      const pageH=ph-margin*2;
+      let y=0;
+      while(y<ih){
+        pdf.addImage(img,"JPEG",margin,margin-y,iw,ih);
+        y+=pageH;
+        if(y<ih) pdf.addPage();
+      }
+    }
+    const fn=`Bilibertograma_${(nome||"resultado").replace(/[^\w]+/g,"_")}.pdf`;
+    pdf.save(fn);
+  }catch(err){ alert("Erro ao gerar PDF: "+err.message); }
+  finally{
+    document.getElementById("pdfHead").style.display="none";
+    btn.style.visibility="visible"; btn.textContent=old; btn.disabled=false;
+  }
+}
+
+/* ===================== SALVAR / CARREGAR ===================== */
+function snapshot(){
+  const ans={};
+  document.querySelectorAll("#fillSection input[type=radio]:checked").forEach(el=>ans[el.name]=el.value);
+  return {nome:f_nome.value,data:f_data.value,idade:f_idade.value,answers:ans,v:1};
+}
+function restore(s){
+  if(!s) return;
+  f_nome.value=s.nome||""; f_data.value=s.data||""; f_idade.value=s.idade||"";
+  Object.entries(s.answers||{}).forEach(([name,val])=>{
+    const el=document.querySelector(`input[name="${name}"][value="${val}"]`); if(el) el.checked=true;
+  });
+  updateProgress();
+}
+function saveLocal(){ localStorage.setItem("bilibertograma", JSON.stringify(snapshot())); toast("Respostas salvas neste navegador."); }
+function exportJson(){
+  const blob=new Blob([JSON.stringify(snapshot(),null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`bilibertograma_${(f_nome.value||"resultado").replace(/\s+/g,"_")}.json`; a.click();
+}
+function importJson(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader(); r.onload=()=>{ try{ restore(JSON.parse(r.result)); toast("Respostas importadas.");}catch{ alert("Arquivo inválido."); } };
+  r.readAsText(file); e.target.value="";
+}
+function clearAll(){
+  if(!confirm("Limpar todas as respostas?")) return;
+  document.querySelectorAll("#fillSection input[type=radio]:checked").forEach(el=>el.checked=false);
+  document.getElementById("results").style.display="none";
+  updateProgress();
+}
+let toastT;
+function toast(msg){
+  let t=document.getElementById("_toast");
+  if(!t){t=document.createElement("div");t.id="_toast";
+    t.style.cssText="position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#1a2236;border:1px solid #2a3553;color:#e8ecf6;padding:11px 18px;border-radius:11px;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.4)";
+    document.body.appendChild(t);}
+  t.textContent=msg; t.style.opacity="1";
+  clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity="0",2200);
+}
+
+/* ===================== INIT ===================== */
+buildForm();
+document.getElementById("f_data").valueAsDate=new Date();
+document.getElementById("btnPdf").onclick=gerarPDF;
+const firstStage=document.querySelector("#fillSection details.stage"); if(firstStage) firstStage.open=true;
+try{ const saved=localStorage.getItem("bilibertograma"); if(saved && confirm("Recuperar respostas salvas neste navegador?")) restore(JSON.parse(saved)); }catch{}
+updateProgress();
+</script>
+</body>
+</html>
