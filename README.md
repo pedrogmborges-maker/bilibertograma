@@ -4,6 +4,7 @@ Instrumento de aferição da **bilibertação existencial** (Liberologia) — do
 
 Página única (HTML estático) para preencher as 100 perguntas do bilibertograma e receber:
 
+- **duas formas de preenchimento**: 3 níveis (0, 0,5 e 1) ou escala gradual de 0 a 1 em passos de 0,1;
 - **Índice Bilibertométrico** (0–100), com notas e percentuais por eixo (energética, financeira, propósito);
 - **revisão completa das respostas avaliadas**, com a nota e a classificação de cada pergunta;
 - **gráficos** por estágio (radar e barras);

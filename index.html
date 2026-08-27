@@ -85,6 +85,18 @@
   .field input{width:100%;background:#fff;border:1px solid var(--line);color:var(--ink);
     padding:11px 13px;border-radius:11px;font-size:14px;font-family:inherit;transition:.15s}
   .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,111,212,.16)}
+  .score-modes{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .score-mode{cursor:pointer;position:relative}
+  .score-mode>input{position:absolute;opacity:0;pointer-events:none}
+  .score-mode-box{display:block;height:100%;padding:15px 16px;border:1.5px solid var(--line);border-radius:14px;
+    background:#fff;transition:.15s}
+  .score-mode-box b{display:block;color:var(--ink);font-size:14px;margin-bottom:3px}
+  .score-mode-box small{display:block;color:var(--muted);font-size:12.5px;line-height:1.5}
+  .score-mode-box .scale-example{display:block;margin-top:9px;color:var(--accent);font-size:12px;font-weight:700}
+  .score-mode:hover .score-mode-box{border-color:#c7ccdc;transform:translateY(-1px)}
+  .score-mode>input:focus-visible+.score-mode-box{outline:2px solid var(--accent);outline-offset:2px}
+  .score-mode>input:checked+.score-mode-box{border-color:var(--accent);background:#f4f7ff;
+    box-shadow:0 0 0 3px rgba(59,111,212,.11)}
   .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:#474c66}
   .legend b{color:var(--ink)}
   .pill{display:inline-flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--line);
@@ -142,6 +154,8 @@
   .opts .o0 input:checked+span{background:var(--bad);border-color:var(--bad)}
   .opts .o5 input:checked+span{background:var(--warn);border-color:var(--warn)}
   .opts .o1 input:checked+span{background:var(--good);border-color:var(--good)}
+  .opts.gradual{display:grid;grid-template-columns:repeat(6,40px);gap:6px}
+  .opts.gradual span{width:40px;height:34px;font-size:12px;border-radius:8px}
 
   /* toolbar */
   .toolbar{position:sticky;bottom:0;z-index:30;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
@@ -244,6 +258,7 @@
   @media(max-width:760px){
     .wrap{padding:0 14px 92px}
     .grid-id{grid-template-columns:1fr}
+    .score-modes{grid-template-columns:1fr}
     .charts{grid-template-columns:1fr}
     .dims{grid-template-columns:1fr}
     .hero{padding:40px 0 18px}
@@ -258,6 +273,7 @@
     .q{flex-wrap:wrap}
     .q .qt{flex:1 1 100%}
     .opts{margin-left:34px;margin-top:4px}
+    .opts.gradual{grid-template-columns:repeat(6,40px)}
     .opts span{width:52px;height:40px}
     .result-hero{padding:20px;gap:14px;flex-direction:column;text-align:center}
     .gauge{margin:0 auto}
@@ -302,7 +318,7 @@
     antecipado de maior liberdade de manifestação intrafísica por meio do <b>domínio das energias
     conscienciais</b> e da <b>independência econômico-financeira</b> (pé-de-meia), visando a
     disponibilidade proexológica integral.</p>
-    <p class="def" style="margin-top:14px">São <b>100 perguntas</b>; cada uma vale 0, 0,5 ou 1 ponto,
+    <p class="def" style="margin-top:14px">São <b>100 perguntas</b>, avaliadas pela escala de pontuação escolhida,
     gerando o <b style="white-space:nowrap">Índice Bilibertométrico</b>.</p>
   </header>
 
@@ -318,15 +334,32 @@
     estágio e identificar o gargalo bilibertológico.</div>
   </div>
 
+  <!-- FORMA DE PREENCHIMENTO -->
+  <div class="card" id="scoreModeCard" data-current="standard">
+    <h2 class="sec"><span class="dot" style="background:var(--gold-deep)"></span>Forma de preenchimento</h2>
+    <div class="score-modes" role="radiogroup" aria-label="Escolha a escala de pontuação">
+      <label class="score-mode">
+        <input type="radio" name="score_mode" value="standard" checked>
+        <span class="score-mode-box"><b>3 níveis</b><small>Escolha direta entre ausente, parcial e consolidada.</small>
+          <span class="scale-example">0 · 0,5 · 1</span></span>
+      </label>
+      <label class="score-mode">
+        <input type="radio" name="score_mode" value="gradual">
+        <span class="score-mode-box"><b>Escala gradual</b><small>Permite indicar com mais precisão o grau de vivência em cada pergunta.</small>
+          <span class="scale-example">0 · 0,1 · 0,2 · … · 0,9 · 1</span></span>
+      </label>
+    </div>
+  </div>
+
   <!-- LEGENDA -->
   <div class="card">
     <h2 class="sec"><span class="dot" style="background:var(--good)"></span>Critério de pontuação</h2>
-    <div class="legend">
+    <div class="legend" id="scoreLegend">
       <span class="pill"><span class="num" style="background:var(--bad)">0</span><b>Ausente</b> — sem vivência ou evidência verificável</span>
       <span class="pill"><span class="num" style="background:var(--warn)">0,5</span><b>Parcial</b> — vivência instável ou em desenvolvimento</span>
       <span class="pill"><span class="num" style="background:var(--good)">1</span><b>Consolidada</b> — vivência regular, funcional, sustentada por fatos/parafatos</span>
     </div>
-    <div class="hint">Considere fatos e parafatos <b>recorrentes</b>, não experiências isoladas, expectativas futuras ou autoimagem idealizada.</div>
+    <div class="hint" id="scoreHint">Considere fatos e parafatos <b>recorrentes</b>, não experiências isoladas, expectativas futuras ou autoimagem idealizada.</div>
   </div>
 
   <!-- FORMULÁRIO (gerado por JS) -->
@@ -437,14 +470,70 @@ const LEVELS = [
 
 const CONS = 6;      // estágio consolidado: >=6/8
 const CONS_P = 3;    // propósito consolidado: >=3/4
+const SCORE_VALUES = {
+  standard:[0,0.5,1],
+  gradual:Array.from({length:11},(_,i)=>i/10)
+};
+
+function scoreMode(){
+  return document.querySelector('input[name="score_mode"]:checked')?.value||"standard";
+}
+function roundScore(value){ return Math.round((value+Number.EPSILON)*10)/10; }
+function formatScore(value){ return String(roundScore(value)).replace(".",","); }
+function scoreValueClass(value){ return value===0?"o0":value===1?"o1":"o5"; }
+function individualScoreLabel(value){
+  if(value===0) return {text:"Ausente",cls:"inc"};
+  if(value===1) return {text:"Consolidada",cls:"cons"};
+  return {text:"Parcial",cls:"dev"};
+}
 
 /* ===================== RENDER FORMULÁRIO ===================== */
 function optHtml(name){
-  return `<div class="opts" role="radiogroup">
-    <label class="o0"><input type="radio" name="${name}" value="0" aria-label="0 — Ausente"><span>0</span></label>
-    <label class="o5"><input type="radio" name="${name}" value="0.5" aria-label="0,5 — Parcial"><span>0,5</span></label>
-    <label class="o1"><input type="radio" name="${name}" value="1" aria-label="1 — Consolidada"><span>1</span></label>
-  </div>`;
+  const mode=scoreMode(),values=SCORE_VALUES[mode];
+  const options=values.map(value=>{
+    const label=individualScoreLabel(value),shown=formatScore(value);
+    return `<label class="${scoreValueClass(value)}"><input type="radio" name="${name}" value="${value}" aria-label="${shown} — ${label.text}"><span>${shown}</span></label>`;
+  }).join("");
+  return `<div class="opts ${mode==="gradual"?"gradual":""}" data-name="${name}" role="radiogroup">${options}</div>`;
+}
+
+function updateScoreLegend(){
+  const gradual=scoreMode()==="gradual";
+  document.getElementById("scoreLegend").innerHTML=gradual?`
+    <span class="pill"><span class="num" style="background:var(--bad)">0</span><b>Ausente</b> — sem vivência ou evidência verificável</span>
+    <span class="pill"><span class="num" style="background:var(--warn);width:auto;padding:0 6px">0,1–0,9</span><b>Parcial</b> — escolha o grau de desenvolvimento observado</span>
+    <span class="pill"><span class="num" style="background:var(--good)">1</span><b>Consolidada</b> — vivência regular e sustentada</span>`:`
+    <span class="pill"><span class="num" style="background:var(--bad)">0</span><b>Ausente</b> — sem vivência ou evidência verificável</span>
+    <span class="pill"><span class="num" style="background:var(--warn)">0,5</span><b>Parcial</b> — vivência instável ou em desenvolvimento</span>
+    <span class="pill"><span class="num" style="background:var(--good)">1</span><b>Consolidada</b> — vivência regular, funcional, sustentada por fatos/parafatos</span>`;
+}
+function rebuildScoreOptions(answers){
+  document.querySelectorAll("#fillSection .opts[data-name]").forEach(old=>{
+    const name=old.dataset.name;
+    old.outerHTML=optHtml(name);
+    const value=answers[name];
+    if(value===undefined) return;
+    const input=document.querySelector(`input[name="${name}"][value="${value}"]`);
+    if(input) input.checked=true;
+  });
+  updateProgress();
+}
+function changeScoreMode(event){
+  if(!event.target.matches('input[name="score_mode"]')) return;
+  const card=document.getElementById("scoreModeCard"),previous=card.dataset.current||"standard";
+  const answers={};
+  document.querySelectorAll("#fillSection input[type=radio]:checked").forEach(el=>answers[el.name]=el.value);
+  const allowed=new Set(SCORE_VALUES[event.target.value].map(String));
+  const incompatible=Object.values(answers).filter(value=>!allowed.has(String(value))).length;
+  if(incompatible && !confirm(`${incompatible} nota(s) não existem na escala de 3 níveis e serão removidas. Deseja continuar?`)){
+    document.querySelector(`input[name="score_mode"][value="${previous}"]`).checked=true;
+    return;
+  }
+  card.dataset.current=event.target.value;
+  rebuildScoreOptions(answers);
+  updateScoreLegend();
+  document.getElementById("results").style.display="none";
+  window._lastAnalysis=null;
 }
 function stageHtml(eixo, idx, st){
   const cls = eixo==="E"?"e":"f";
@@ -530,12 +619,12 @@ function collect(){
     arr.forEach((st,i)=>{
       let sum=0, answered=0;
       st.perguntas.forEach((_,qi)=>{ const v=getVal(`${k}_${i}_${qi}`); if(v!==null){sum+=v;answered++;} });
-      eixo[k].push({score:sum, answered});
+      eixo[k].push({score:roundScore(sum), answered});
     });
   });
   let pSum=0,pAns=0;
   DATA.proposito.perguntas.forEach((_,qi)=>{ const v=getVal(`P_0_${qi}`); if(v!==null){pSum+=v;pAns++;} });
-  return {E:eixo.E, F:eixo.F, P:{score:pSum,answered:pAns}};
+  return {E:eixo.E, F:eixo.F, P:{score:roundScore(pSum),answered:pAns}};
 }
 function setAx(id,n,total){
   const b=document.getElementById(id), bar=document.getElementById(id+"bar");
@@ -586,7 +675,9 @@ function ageStatus(age, idxStage){
 
 function analyze(c, age){
   const gE=firstGap(c.E), gF=firstGap(c.F);
-  const totE=c.E.reduce((a,b)=>a+b.score,0), totF=c.F.reduce((a,b)=>a+b.score,0), totP=c.P.score;
+  const totE=roundScore(c.E.reduce((a,b)=>a+b.score,0));
+  const totF=roundScore(c.F.reduce((a,b)=>a+b.score,0));
+  const totP=roundScore(c.P.score);
   const pctE=totE/48, pctF=totF/48;
 
   let priority; // {eixo,stageIdx,stageKey} or {eixo:'P'} or {eixo:'done'}
@@ -626,8 +717,8 @@ function analyze(c, age){
     const arr=k==="E"?c.E:c.F, nm=k==="E"?"Energética":"Financeira", src=k==="E"?DATA.energetica:DATA.financeira;
     arr.forEach((s,i)=>{
       const cl=classify(s.score,8);
-      if(cl.t==="cons") strengths.push(`${nm} · ${src[i].estagio} (${s.score}/8)`);
-      else if(cl.t==="inc") todo.push(`${nm} · ${src[i].estagio} (${s.score}/8)`);
+      if(cl.t==="cons") strengths.push(`${nm} · ${src[i].estagio} (${formatScore(s.score)}/8)`);
+      else if(cl.t==="inc") todo.push(`${nm} · ${src[i].estagio} (${formatScore(s.score)}/8)`);
     });
   });
 
@@ -651,10 +742,10 @@ let gaugeC, radarC, barC;
 function calcular(){
   const c = collect();
   const a = analyze(c, parseInt(document.getElementById("f_idade").value)||0);
-  const total = a.totE + a.totF + a.totP; // 0..100
+  const total = roundScore(a.totE + a.totF + a.totP); // 0..100
 
   // index gauge
-  document.getElementById("indexVal").textContent = Number.isInteger(total)? total : total.toFixed(1);
+  document.getElementById("indexVal").textContent = formatScore(total);
   const L = [...LEVELS].reverse().find(x=>total>=x.min) || LEVELS[0];
   document.getElementById("indexLevel").textContent = L.lvl;
   document.getElementById("indexDesc").textContent = L.d;
@@ -663,7 +754,7 @@ function calcular(){
     const pct=Math.round(val/max*100);
     document.getElementById(id).textContent=pct+"%";
     document.getElementById(bar).style.width=pct+"%";
-    document.getElementById(raw).textContent=`${(Number.isInteger(val)?val:val.toFixed(1))} / ${max} pts`;
+    document.getElementById(raw).textContent=`${formatScore(val)} / ${max} pts`;
   };
   setDim("dimE","barE","rawE",a.totE,48);
   setDim("dimF","barF","rawF",a.totF,48);
@@ -723,24 +814,22 @@ function fillTable(c){
     tb.insertAdjacentHTML("beforeend", `<tr>
       <td class="th-cell"><b>${name}</b><div class="muted" style="font-size:11px">${DATA.energetica[i].marco} · ${DATA.financeira[i].marco}</div></td>
       <td class="muted" data-l="Faixa etária">${DATA.energetica[i].faixa}</td>
-      <td data-l="Energética">${e.score}/8 &nbsp;<span class="tag ${ce.t}">${ce.l}</span></td>
-      <td data-l="Financeira">${f.score}/8 &nbsp;<span class="tag ${cf.t}">${cf.l}</span></td>
+      <td data-l="Energética">${formatScore(e.score)}/8 &nbsp;<span class="tag ${ce.t}">${ce.l}</span></td>
+      <td data-l="Financeira">${formatScore(f.score)}/8 &nbsp;<span class="tag ${cf.t}">${cf.l}</span></td>
     </tr>`);
   });
   const cp=classify(c.P.score,4);
   tb.insertAdjacentHTML("beforeend", `<tr>
     <td class="th-cell"><b>Propósito bilibertogênico</b></td><td class="muted" data-l="Eixo">Integração</td>
-    <td colspan="2" data-l="Pontuação">${c.P.score}/4 &nbsp;<span class="tag ${cp.t}">${cp.l}</span></td></tr>`);
+    <td colspan="2" data-l="Pontuação">${formatScore(c.P.score)}/4 &nbsp;<span class="tag ${cp.t}">${cp.l}</span></td></tr>`);
 }
 
 function answerLabel(value){
-  if(value===1) return {text:"Consolidada",cls:"cons"};
-  if(value===0.5) return {text:"Parcial",cls:"dev"};
-  return {text:"Ausente",cls:"inc"};
+  return individualScoreLabel(value);
 }
 function answerItemHtml(question,number,value){
   const label=answerLabel(value);
-  const score=value===0.5?"0,5":String(value);
+  const score=formatScore(value);
   return `<div class="answer-item">
     <span class="answer-number">${number}</span>
     <span class="answer-question">${question}</span>
@@ -788,7 +877,8 @@ function fillAnswersReview(){
   </section>`;
   total+=purposeTotal;
   root.innerHTML=html;
-  document.getElementById("answersSummary").textContent=`${total} de 100 respostas com nota, apresentadas por eixo e estágio.`;
+  const mode=scoreMode()==="gradual"?"escala gradual (passos de 0,1)":"escala de 3 níveis";
+  document.getElementById("answersSummary").textContent=`${total} de 100 respostas com nota, apresentadas por eixo e estágio · ${mode}.`;
 }
 
 /* ===================== GRÁFICOS ===================== */
@@ -834,8 +924,10 @@ async function gerarPDF(){
   const nome=document.getElementById("f_nome").value||"—";
   const data=document.getElementById("f_data").value||"";
   const idade=document.getElementById("f_idade").value;
+  const modeLabel=scoreMode()==="gradual"?"Escala gradual (0,1)":"Escala de 3 níveis";
+  const dateLabel=data?data.split("-").reverse().join("/"):"";
   document.getElementById("pdfWho").innerHTML =
-    `<b>${nome}</b>${idade?` · ${idade} anos`:""}<br>${data?data.split("-").reverse().join("/"):""}`;
+    `<b>${nome}</b>${idade?` · ${idade} anos`:""}<br>${dateLabel?dateLabel+" · ":""}${modeLabel}`;
   document.getElementById("pdfHead").style.display="flex";
   btn.style.visibility="hidden";
   const node=document.getElementById("results");
@@ -892,14 +984,22 @@ async function gerarPDF(){
 function snapshot(){
   const ans={};
   document.querySelectorAll("#fillSection input[type=radio]:checked").forEach(el=>ans[el.name]=el.value);
-  return {nome:f_nome.value,data:f_data.value,idade:f_idade.value,answers:ans,v:1};
+  return {nome:f_nome.value,data:f_data.value,idade:f_idade.value,scoreMode:scoreMode(),answers:ans,v:2};
 }
 function restore(s){
   if(!s) return;
   f_nome.value=s.nome||""; f_data.value=s.data||""; f_idade.value=s.idade||"";
+  document.querySelectorAll("#fillSection input[type=radio]:checked").forEach(el=>el.checked=false);
+  const mode=s.scoreMode==="gradual"?"gradual":"standard";
+  document.querySelector(`input[name="score_mode"][value="${mode}"]`).checked=true;
+  document.getElementById("scoreModeCard").dataset.current=mode;
+  rebuildScoreOptions({});
+  updateScoreLegend();
   Object.entries(s.answers||{}).forEach(([name,val])=>{
     const el=document.querySelector(`input[name="${name}"][value="${val}"]`); if(el) el.checked=true;
   });
+  document.getElementById("results").style.display="none";
+  window._lastAnalysis=null;
   updateProgress();
 }
 function saveLocal(){ localStorage.setItem("bilibertograma", JSON.stringify(snapshot())); toast("Respostas salvas neste navegador."); }
@@ -931,6 +1031,8 @@ function toast(msg){
 
 /* ===================== INIT ===================== */
 buildForm();
+document.getElementById("scoreModeCard").addEventListener("change",changeScoreMode);
+updateScoreLegend();
 document.getElementById("f_data").valueAsDate=new Date();
 document.getElementById("btnPdf").onclick=gerarPDF;
 const firstStage=document.querySelector("#fillSection details.stage"); if(firstStage) firstStage.open=true;
