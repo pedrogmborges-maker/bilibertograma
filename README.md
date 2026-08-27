@@ -5,6 +5,7 @@ Instrumento de aferição da **bilibertação existencial** (Liberologia) — do
 Página única (HTML estático) para preencher as 100 perguntas do bilibertograma e receber:
 
 - **Índice Bilibertométrico** (0–100), com notas e percentuais por eixo (energética, financeira, propósito);
+- **revisão completa das respostas avaliadas**, com a nota e a classificação de cada pergunta;
 - **gráficos** por estágio (radar e barras);
 - **análise automática** do gargalo bilibertológico e do próximo passo prioritário;
 - **exportação em PDF** do resultado.

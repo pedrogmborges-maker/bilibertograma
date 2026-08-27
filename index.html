@@ -192,6 +192,24 @@
   .tag.cons{background:rgba(46,163,111,.14);color:var(--good)}
   .tag.dev{background:rgba(211,144,0,.16);color:#a06e00}
   .tag.inc{background:rgba(214,83,78,.14);color:var(--bad)}
+  .answer-review{margin-top:24px}
+  .answer-review>h3{margin:0 0 5px;font-family:var(--font-serif);font-size:18px;font-weight:600}
+  .answer-axis{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .answer-axis-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;
+    background:var(--soft);font-size:13px;font-weight:700}
+  .answer-group{padding:12px 15px 5px}
+  .answer-group+.answer-group{border-top:1px solid var(--line)}
+  .answer-group-title{margin-bottom:5px;font-size:12px;color:var(--muted);font-weight:700;
+    letter-spacing:.04em;text-transform:uppercase}
+  .answer-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:start;
+    padding:9px 0;border-top:1px solid #f0eee5}
+  .answer-item:first-of-type{border-top:none}
+  .answer-number{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:#eeece4;
+    color:var(--muted);font-size:11px;font-weight:700}
+  .answer-question{font-size:12.5px;color:#454a66;line-height:1.5}
+  .answer-score{display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .answer-score b{min-width:28px;text-align:center;font-size:12px}
+  .empty-answers{padding:14px 15px;color:var(--muted);font-size:13px;background:var(--soft)}
   .analysis h3{margin:20px 0 8px;font-family:var(--font-serif);font-size:18px;font-weight:600}
   .callout{border-left:3px solid var(--accent);background:var(--soft);padding:14px 16px;
     border-radius:0 12px 12px 0;margin:10px 0;font-size:13.5px}
@@ -258,6 +276,9 @@
       margin-bottom:5px;padding:0 0 8px}
     #stagesTable td[data-l]::before{content:attr(data-l);color:var(--muted);
       font-weight:700;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
+    .answer-axis-title{align-items:flex-start}
+    .answer-item{grid-template-columns:24px minmax(0,1fr)}
+    .answer-score{grid-column:2;justify-content:flex-start}
   }
   @media(max-width:400px){
     .hero h1{font-size:42px}
@@ -363,6 +384,12 @@
         <div id="prioBody"></div>
       </div>
       <div id="analysisExtra"></div>
+    </div>
+
+    <div class="answer-review">
+      <h3>Respostas avaliadas</h3>
+      <div class="muted" id="answersSummary"></div>
+      <div id="answersReview"></div>
     </div>
   </div>
 
@@ -646,6 +673,7 @@ function calcular(){
   drawRadar(c);
   drawBar(c);
   fillTable(c);
+  fillAnswersReview();
 
   // priority
   document.getElementById("prioTitle").textContent = a.title;
@@ -705,6 +733,64 @@ function fillTable(c){
     <td colspan="2" data-l="Pontuação">${c.P.score}/4 &nbsp;<span class="tag ${cp.t}">${cp.l}</span></td></tr>`);
 }
 
+function answerLabel(value){
+  if(value===1) return {text:"Consolidada",cls:"cons"};
+  if(value===0.5) return {text:"Parcial",cls:"dev"};
+  return {text:"Ausente",cls:"inc"};
+}
+function answerItemHtml(question,number,value){
+  const label=answerLabel(value);
+  const score=value===0.5?"0,5":String(value);
+  return `<div class="answer-item">
+    <span class="answer-number">${number}</span>
+    <span class="answer-question">${question}</span>
+    <span class="answer-score"><b>${score}</b><span class="tag ${label.cls}">${label.text}</span></span>
+  </div>`;
+}
+function fillAnswersReview(){
+  const root=document.getElementById("answersReview");
+  let html="",total=0;
+  const axes=[
+    {key:"E",title:"Liberdade energética",color:"var(--energ)",stages:DATA.energetica},
+    {key:"F",title:"Liberdade financeira",color:"var(--fin)",stages:DATA.financeira}
+  ];
+  axes.forEach(axis=>{
+    let groups="",axisTotal=0;
+    axis.stages.forEach((stage,si)=>{
+      let items="",stageTotal=0;
+      stage.perguntas.forEach((question,qi)=>{
+        const value=getVal(`${axis.key}_${si}_${qi}`);
+        if(value===null) return;
+        items+=answerItemHtml(question,qi+1,value);
+        stageTotal++;
+      });
+      if(stageTotal){
+        groups+=`<div class="answer-group"><div class="answer-group-title">${stage.estagio} · ${stage.marco}</div>${items}</div>`;
+        axisTotal+=stageTotal;
+      }
+    });
+    html+=`<section class="answer-axis">
+      <div class="answer-axis-title"><span style="color:${axis.color}">${axis.title}</span><span>${axisTotal} avaliadas</span></div>
+      ${groups||'<div class="empty-answers">Nenhuma resposta avaliada neste eixo.</div>'}
+    </section>`;
+    total+=axisTotal;
+  });
+  let purposeItems="",purposeTotal=0;
+  DATA.proposito.perguntas.forEach((question,qi)=>{
+    const value=getVal(`P_0_${qi}`);
+    if(value===null) return;
+    purposeItems+=answerItemHtml(question,qi+1,value);
+    purposeTotal++;
+  });
+  html+=`<section class="answer-axis">
+    <div class="answer-axis-title"><span style="color:var(--prop)">Propósito bilibertogênico</span><span>${purposeTotal} avaliadas</span></div>
+    ${purposeItems?`<div class="answer-group">${purposeItems}</div>`:'<div class="empty-answers">Nenhuma resposta avaliada neste eixo.</div>'}
+  </section>`;
+  total+=purposeTotal;
+  root.innerHTML=html;
+  document.getElementById("answersSummary").textContent=`${total} de 100 respostas com nota, apresentadas por eixo e estágio.`;
+}
+
 /* ===================== GRÁFICOS ===================== */
 const C_ENERG="#ff9900", C_FIN="#4a86e8", C_GRID="#e4e1d6", C_TXT="#4a4d63", C_TICK="#8a8ea3";
 function drawGauge(total){
@@ -742,6 +828,8 @@ async function gerarPDF(){
   if(!window._lastAnalysis){ alert("Calcule o resultado primeiro."); return; }
   const btn=document.getElementById("btnPdf"), old=btn.textContent;
   btn.textContent="Gerando…"; btn.disabled=true;
+  // Atualiza a revisão no instante da exportação para incluir as notas mais recentes.
+  fillAnswersReview();
   // preencher cabeçalho do PDF
   const nome=document.getElementById("f_nome").value||"—";
   const data=document.getElementById("f_data").value||"";
@@ -752,25 +840,44 @@ async function gerarPDF(){
   btn.style.visibility="hidden";
   const node=document.getElementById("results");
   try{
-    const canvas=await html2canvas(node,{scale:2,backgroundColor:"#ffffff",useCORS:true,
-      windowWidth:node.scrollWidth});
-    const img=canvas.toDataURL("image/jpeg",0.95);
+    // Aguarda a lista recalculada ocupar sua altura final antes das capturas.
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF("p","mm","a4");
     const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
-    const margin=8, iw=pw-margin*2, ih=canvas.height*iw/canvas.width;
-    let left=ih, pos=margin;
-    if(ih<=ph-margin*2){
-      pdf.addImage(img,"JPEG",margin,margin,iw,ih);
-    }else{
-      // paginar
-      const pageH=ph-margin*2;
-      let y=0;
-      while(y<ih){
-        pdf.addImage(img,"JPEG",margin,margin-y,iw,ih);
-        y+=pageH;
-        if(y<ih) pdf.addPage();
+    const margin=8, iw=pw-margin*2, pageH=ph-margin*2, gap=3;
+    let cursor=margin, imageIndex=0;
+
+    // Capturas menores evitam o limite de altura do canvas, que cortava a revisão final.
+    const chunks=[];
+    Array.from(node.children).forEach(el=>{
+      if(!el.classList.contains("answer-review")){
+        chunks.push(el);
+        return;
       }
+      chunks.push(el.children[0],el.children[1]);
+      chunks.push(...document.getElementById("answersReview").children);
+    });
+    for(const el of chunks.filter(Boolean)){
+      const canvas=await html2canvas(el,{scale:2,backgroundColor:"#ffffff",useCORS:true,
+        windowWidth:node.scrollWidth,scrollX:0,scrollY:-window.scrollY});
+      if(!canvas.width||!canvas.height) continue;
+      const img=canvas.toDataURL("image/jpeg",0.94);
+      const ih=canvas.height*iw/canvas.width;
+      const available=ph-margin-cursor;
+      if(cursor>margin && ih>available){ pdf.addPage(); cursor=margin; }
+
+      let consumed=0;
+      const alias=`result_chunk_${imageIndex++}`;
+      while(consumed<ih-0.01){
+        const room=ph-margin-cursor;
+        pdf.addImage(img,"JPEG",margin,cursor-consumed,iw,ih,alias,"FAST");
+        const shown=Math.min(room,ih-consumed);
+        consumed+=shown;
+        cursor+=shown;
+        if(consumed<ih-0.01){ pdf.addPage(); cursor=margin; }
+      }
+      cursor+=gap;
     }
     const fn=`Bilibertograma_${(nome||"resultado").replace(/[^\w]+/g,"_")}.pdf`;
     pdf.save(fn);
